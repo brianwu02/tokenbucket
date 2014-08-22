@@ -45,6 +45,13 @@ func (b *Bucket) SetRate(rate time.Duration) {
 
 //AddTokens manually adds n tokens to the bucket
 func (b *Bucket) AddToken(n int64) {
+	for i := int64(0); i < n; i++ {
+		b.tokens <- struct{}{}
+	}
+}
+
+func (b *Bucket) GetTokenCount() int {
+	return len(b.tokens)
 }
 
 func (b *Bucket) withdrawTokens(n int64) error {
@@ -73,14 +80,14 @@ func (b *Bucket) SpendToken(n int64) <-chan error {
 // Drain will empty all tokens in the bucket
 // If the tokens are being added too quickly (if the rate is too fast)
 // this will never drain
-func (b *Bucket) Drain() error{
-    // TODO replace this with a more solid approach (such as replacing the channel altogether)
-    for {
-        select {
-            case _ = <-b.tokens:
-                continue
-            default:
-                return nil
-        }
-    }
+func (b *Bucket) Drain() error {
+	// TODO replace this with a more solid approach (such as replacing the channel altogether)
+	for {
+		select {
+		case _ = <-b.tokens:
+			continue
+		default:
+			return nil
+		}
+	}
 }
